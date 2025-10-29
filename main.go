@@ -8,6 +8,9 @@ import (
 	"net/http"
 	"vodpackager/logging"
 	"vodpackager/metrics"
+	"vodpackager/mp4"
+	"vodpackager/packager"
+	"vodpackager/segmenter"
 	"vodpackager/status"
 )
 
@@ -30,6 +33,18 @@ func main() {
 	router.Use(middleware.Recoverer) // fallback recover (we also have our own)
 	// TODO exception handling
 	//router.Use(recoveryMiddleware)   // custom JSON‑error recovery
+
+	// ---------- Application logic ----------
+	mp4Segmenter := mp4.MP4Segmenter{}
+	dashPackager := packager.New("./.res", "./.run", "http://localhost", []segmenter.Segmenter{&mp4Segmenter})
+
+	// ---------- Application handlers ----------
+	packagerHandler := packager.CreateVideoPackagerHandler(dashPackager, appMetrics)
+
+	// ---------- Application routes ----------
+	router.Post("/package", packagerHandler.Handle) // TODO requires authentication
+	router.Get("/status", status.StatusHandler)
+	router.Get("/statusEx", status.StatusExHandler) // TODO requires authentication and/or nginx rule for IP address whitelisting
 
 	// ---------- Prometheus endpoint ----------
 	router.Handle("/metrics", promhttp.Handler()) // TODO requires nginx rule for IP address whitelisting, authentication wouldn't be practical
