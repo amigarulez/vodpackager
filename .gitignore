@@ -28,5 +28,12 @@ go.work.sum
 .env
 
 # Editor/IDE
-# .idea/
+.idea/
 # .vscode/
+
+# Working source directory for data like videos
+#.res/*
+
+# Run temporary data directories
+#.run/*
+
